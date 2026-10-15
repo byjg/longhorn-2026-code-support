@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Project commands: ./gluo <name> [args]. Each is a door into PaymentWorkflow (slide 29).
+ * Project commands: ./gluo <name> [args]. Each is a door into PaymentService (slide 29).
  * The webhook is the fifth door, POST /webhook.
  *
  * Every public method of PaymentCommands is a command: payment:create, payment:charge,

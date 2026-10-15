@@ -10,7 +10,7 @@ use Shop\Command\PaymentCommands;
 use Shop\Gateway\GatewayClient;
 use Shop\Model\Payment;
 use Shop\Payment\PaymentState;
-use Shop\Payment\PaymentWorkflow;
+use Shop\Payment\PaymentService;
 use Shop\Repository\PaymentRepository;
 use Tests\Controller\BaseApiTestCase;
 
@@ -70,7 +70,7 @@ class PaymentCommandsTest extends BaseApiTestCase
     private function commands(MockClient $http): PaymentCommands
     {
         return new PaymentCommands(
-            Config::get(PaymentWorkflow::class),
+            Config::get(PaymentService::class),
             new GatewayClient($http, 'http://gateway', 'http://shop/webhook')
         );
     }

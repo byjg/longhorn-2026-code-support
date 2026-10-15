@@ -11,6 +11,7 @@ use ByJG\MicroOrm\Query;
 use ByJG\MicroOrm\Repository;
 use ReflectionException;
 use Shop\Model\Payment;
+use Shop\Payment\PaymentNotFound;
 
 class PaymentRepository extends BaseRepository
 {
@@ -22,6 +23,16 @@ class PaymentRepository extends BaseRepository
     public function __construct(DatabaseExecutor $executor)
     {
         $this->repository = new Repository($executor, Payment::class);
+    }
+
+    public function getOrFail(int $paymentId): Payment
+    {
+        $payment = $this->get($paymentId);
+        if (!$payment instanceof Payment) {
+            throw PaymentNotFound::withId($paymentId);
+        }
+
+        return $payment;
     }
 
     /**

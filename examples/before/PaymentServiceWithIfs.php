@@ -2,16 +2,17 @@
 
 // The "before" picture: the same payment rules as shop/src/Payment, written as plain PHP
 // with ifs and no state machine. It is not wired into the shop app; it is here to be read
-// side by side with shop/src/Payment/PaymentMachine.php.
+// side by side with shop/src/Payment/PaymentMachine.php and PaymentService.php.
 
-namespace Shop\Payment;
+namespace Before;
 
 use Psr\Log\LoggerInterface;
 use Shop\Model\Payment;
 use Shop\Payment\Mail\Mailer;
 use Shop\Payment\Mail\PaymentConfirmed;
+use Shop\Repository\PaymentRepository;
 
-final class PaymentService
+final class PaymentServiceWithIfs
 {
     public function __construct(
         private PaymentRepository $repo,

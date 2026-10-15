@@ -8,17 +8,16 @@ use Psr\Http\Client\ClientExceptionInterface;
 use RuntimeException;
 use Shop\Gateway\GatewayClient;
 use Shop\Payment\Move;
-use Shop\Payment\PaymentState;
-use Shop\Payment\PaymentWorkflow;
+use Shop\Payment\PaymentService;
 
 /**
  * The doors that are not the webhook (slide 29), as ./gluo commands. Each one is a few
- * lines: it asks PaymentWorkflow, and prints what happened.
+ * lines: it asks PaymentService, and prints what happened.
  */
 class PaymentCommands
 {
     public function __construct(
-        private readonly PaymentWorkflow $workflow,
+        private readonly PaymentService $payments,
         private readonly GatewayClient $gateway,
     ) {
     }
@@ -30,7 +29,7 @@ class PaymentCommands
      */
     public function create(float $amount): void
     {
-        $payment = $this->workflow->open($amount);
+        $payment = $this->payments->open($amount);
         $this->say("#{$payment->getId()} created: CREATED");
 
         try {
@@ -40,7 +39,7 @@ class PaymentCommands
             return;
         }
 
-        $this->report($this->workflow->submit((int)$payment->getId(), $reference));
+        $this->report($this->payments->submit((int)$payment->getId(), $reference));
     }
 
     /**
@@ -50,7 +49,7 @@ class PaymentCommands
      */
     public function charge(int $paymentId): void
     {
-        $this->report($this->workflow->move($paymentId, PaymentState::Paid, ['gateway' => 'succeeded'], 'admin'));
+        $this->report($this->payments->charge($paymentId, 'admin'));
     }
 
     /**
@@ -60,7 +59,7 @@ class PaymentCommands
      */
     public function retry(int $paymentId): void
     {
-        $this->report($this->workflow->move($paymentId, PaymentState::Paid, ['gateway' => 'succeeded'], 'retry'));
+        $this->report($this->payments->charge($paymentId, 'retry'));
     }
 
     /**
@@ -70,7 +69,7 @@ class PaymentCommands
      */
     public function refund(int $paymentId): void
     {
-        $this->report($this->workflow->refund($paymentId, $this->now()));
+        $this->report($this->payments->refund($paymentId, $this->now()));
     }
 
     /**
@@ -78,7 +77,7 @@ class PaymentCommands
      */
     public function sweep(): void
     {
-        $moves = $this->workflow->sweep($this->now());
+        $moves = $this->payments->sweep($this->now());
 
         if ($moves === []) {
             $this->say('nothing to sweep');

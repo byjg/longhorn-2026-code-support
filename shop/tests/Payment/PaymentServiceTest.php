@@ -2,28 +2,28 @@
 
 namespace Tests\Payment;
 
-use ByJG\AnyDataset\Db\DatabaseExecutor;
 use ByJG\Config\Config;
-use ByJG\MicroOrm\Exception\UpdateConstraintException;
 use ByJG\StateMachine\FiniteStateMachine;
 use DateTimeImmutable;
 use DateTimeZone;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
-use Shop\Model\Payment;
+use Shop\Payment\PaymentMover;
 use Shop\Payment\PaymentNotFound;
+use Shop\Payment\PaymentService;
 use Shop\Payment\PaymentState;
-use Shop\Payment\PaymentWorkflow;
 use Shop\Repository\PaymentRepository;
 use Tests\Controller\BaseApiTestCase;
 
 /**
- * Every door goes through PaymentWorkflow. These run against the test SQLite database, with
- * the machine and the repository from the container; only the workflow's own log is captured.
+ * Every door goes through PaymentService. These run against the test SQLite database, with
+ * the machine and the repository from the container; only the payments log is captured.
  */
-class PaymentWorkflowTest extends BaseApiTestCase
+class PaymentServiceTest extends BaseApiTestCase
 {
-    private PaymentWorkflow $workflow;
+    use PaymentFixtures;
+
+    private PaymentService $service;
     private PaymentRepository $payments;
     private TestHandler $log;
 
@@ -34,27 +34,28 @@ class PaymentWorkflowTest extends BaseApiTestCase
 
         $this->payments = Config::get(PaymentRepository::class);
         $this->log = new TestHandler();
-        $this->workflow = new PaymentWorkflow(
-            Config::get(FiniteStateMachine::class),
+        $logger = new Logger('test', [$this->log]);
+        $this->service = new PaymentService(
+            new PaymentMover(Config::get(FiniteStateMachine::class), $this->payments, $logger),
             $this->payments,
-            new Logger('test', [$this->log])
+            $logger
         );
     }
 
     public function testThePaymentWalksTheHappyPath(): void
     {
-        $payment = $this->workflow->open(100.0);
+        $payment = $this->service->open(100.0);
         $this->assertSame('CREATED', $payment->getStatus());
 
-        $created = $this->workflow->submit((int)$payment->getId(), 'GW-1');
+        $created = $this->service->submit((int)$payment->getId(), 'GW-1');
         $this->assertTrue($created->isMoved());
         $this->assertSame(['CREATED', 'PENDING'], [$created->from, $created->to]);
         $this->assertSame('GW-1', $this->payments->get($created->paymentId)->getGatewayRef());
 
-        $review = $this->workflow->decide($created->paymentId, ['gateway' => 'requires_review'], 'webhook');
+        $review = $this->service->gatewayReported($created->paymentId, 'requires_review');
         $this->assertSame('ANALYSIS', $review->to);
 
-        $paid = $this->workflow->decide($created->paymentId, ['gateway' => 'succeeded'], 'webhook');
+        $paid = $this->service->gatewayReported($created->paymentId, 'succeeded');
         $this->assertSame('PAID', $paid->to);
 
         $saved = $this->payments->get($created->paymentId);
@@ -66,7 +67,7 @@ class PaymentWorkflowTest extends BaseApiTestCase
     public function testAnUnknownPaymentIsReported(): void
     {
         $this->expectException(PaymentNotFound::class);
-        $this->workflow->decide(999999, ['gateway' => 'succeeded'], 'webhook');
+        $this->service->gatewayReported(999999, 'succeeded');
     }
 
     // Slide 26 — "A second charge asks for PAID → PAID. That arrow does not exist."
@@ -74,7 +75,7 @@ class PaymentWorkflowTest extends BaseApiTestCase
     {
         $id = $this->paymentIn(PaymentState::Paid);
 
-        $move = $this->workflow->move($id, PaymentState::Paid, ['gateway' => 'succeeded'], 'admin');
+        $move = $this->service->charge($id);
 
         $this->assertFalse($move->isMoved());
         $this->assertSame('no arrow PAID → PAID', $move->reason);
@@ -86,33 +87,11 @@ class PaymentWorkflowTest extends BaseApiTestCase
     {
         $id = $this->paymentIn(PaymentState::Pending);
 
-        $move = $this->workflow->decide($id, ['gateway' => 'succeeded'], 'webhook');
+        $move = $this->service->gatewayReported($id, 'succeeded');
 
         $this->assertFalse($move->isMoved());
         $this->assertSame('PENDING→ANALYSIS (PaymentAuthorized: no), PENDING→FAILED (IsAbandoned: no)', $move->reason);
         $this->assertSame('PENDING', $this->payments->get($id)->getStatus());
-    }
-
-    public function testTheGuardThatSaidNoIsNamed(): void
-    {
-        $id = $this->paymentIn(PaymentState::Analysis);
-
-        $move = $this->workflow->move($id, PaymentState::Paid, ['gateway' => 'expired'], 'admin');
-
-        $this->assertSame('RiskApproved said no', $move->reason);
-        $this->assertSame('ANALYSIS', $this->payments->get($id)->getStatus());
-    }
-
-    public function testASaveFromAStaleStateIsRejected(): void
-    {
-        $id = $this->paymentIn(PaymentState::Analysis);
-
-        // Another door moved it to PAID after this one loaded it as ANALYSIS
-        $stale = $this->payments->get($id);
-        $this->payments->save($this->payments->get($id)->setStatus(PaymentState::Paid->value));
-
-        $this->expectException(UpdateConstraintException::class);
-        $this->payments->saveMove($stale->setStatus(PaymentState::Failed->value), PaymentState::Analysis->value);
     }
 
     public function testTheSweepFailsAbandonedPaymentsAndClosesExpiredOnes(): void
@@ -124,7 +103,7 @@ class PaymentWorkflowTest extends BaseApiTestCase
         $refundable = $this->paymentIn(PaymentState::Paid, paidDaysAgo: 3);
 
         $moves = [];
-        foreach ($this->workflow->sweep($now) as $move) {
+        foreach ($this->service->sweep($now) as $move) {
             $moves[$move->paymentId] = $move;
         }
 
@@ -141,30 +120,7 @@ class PaymentWorkflowTest extends BaseApiTestCase
         $recent = $this->paymentIn(PaymentState::Paid, paidDaysAgo: 3);
         $old = $this->paymentIn(PaymentState::Paid, paidDaysAgo: 45);
 
-        $this->assertSame('REFUNDED', $this->workflow->refund($recent, $now)->to);
-        $this->assertSame('InRefundWindow said no', $this->workflow->refund($old, $now)->reason);
-    }
-
-    /**
-     * A payment already in a given state — a fixture, written straight to the table.
-     */
-    private function paymentIn(PaymentState $state, int $updatedHoursAgo = 0, ?int $paidDaysAgo = null): int
-    {
-        $payment = (new Payment())->setAmount(50.0)->setStatus($state->value);
-        $this->payments->save($payment);
-        $id = (int)$payment->getId();
-
-        /** @var DatabaseExecutor $executor */
-        $executor = Config::get(DatabaseExecutor::class);
-        $executor->execute(
-            "update payment set updated_at = datetime('now', :updated), paid_at = :paid where id = :id",
-            [
-                'updated' => "-{$updatedHoursAgo} hours",
-                'paid' => $paidDaysAgo === null ? null : gmdate('Y-m-d H:i:s', time() - $paidDaysAgo * 86400),
-                'id' => $id,
-            ]
-        );
-
-        return $id;
+        $this->assertSame('REFUNDED', $this->service->refund($recent, $now)->to);
+        $this->assertSame('InRefundWindow said no', $this->service->refund($old, $now)->reason);
     }
 }

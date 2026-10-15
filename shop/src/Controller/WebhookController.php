@@ -8,7 +8,7 @@ use ByJG\RestServer\HttpRequest;
 use ByJG\RestServer\HttpResponse;
 use OpenApi\Attributes as OA;
 use Shop\Payment\PaymentNotFound;
-use Shop\Payment\PaymentWorkflow;
+use Shop\Payment\PaymentService;
 
 /**
  * Slide 37 — "What that leaves in your controller". The gateway only knows what happened;
@@ -16,7 +16,7 @@ use Shop\Payment\PaymentWorkflow;
  */
 class WebhookController
 {
-    public function __construct(private readonly PaymentWorkflow $workflow)
+    public function __construct(private readonly PaymentService $payments)
     {
     }
 
@@ -57,7 +57,7 @@ class WebhookController
         $payload = ValidateRequest::getPayload();
 
         try {
-            $move = $this->workflow->decide((int)$payload['payment_id'], ['gateway' => (string)$payload['gateway']], 'webhook');
+            $move = $this->payments->gatewayReported((int)$payload['payment_id'], (string)$payload['gateway']);
         } catch (PaymentNotFound $e) {
             throw new Error404Exception($e->getMessage());
         }

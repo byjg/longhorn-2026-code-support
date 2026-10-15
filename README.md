@@ -46,9 +46,9 @@ You need Docker. Nothing else is installed on the host.
 | 22–24 | The moves, where the ifs went, where the emails went | [`Condition/RiskApproved.php`](shop/src/Payment/Condition/RiskApproved.php), [`Action/SendReceipt.php`](shop/src/Payment/Action/SendReceipt.php) |
 | 26 | The replay is impossible now | `payment:charge` / `payment:retry` on a PAID payment |
 | 27 | So where does it live? | [`shop/src/Payment/PaymentMachine.php`](shop/src/Payment/PaymentMachine.php), word for word |
-| 29 | The five entry points | [`PaymentWorkflow.php`](shop/src/Payment/PaymentWorkflow.php), [`PaymentCommands.php`](shop/src/Command/PaymentCommands.php), [`WebhookController.php`](shop/src/Controller/WebhookController.php) |
-| 30 | Sometimes the data decides | `PaymentWorkflow::decide()` → `autoTransitionFrom()` |
-| 32 | Persist first, act second | `PaymentWorkflow::commit()`: save, then `process()` |
+| 29 | The five entry points | [`PaymentService.php`](shop/src/Payment/PaymentService.php), [`PaymentCommands.php`](shop/src/Command/PaymentCommands.php), [`WebhookController.php`](shop/src/Controller/WebhookController.php) |
+| 30 | Sometimes the data decides | `PaymentService::gatewayReported()` → `PaymentMover::decide()` → `autoTransitionFrom()` |
+| 32 | Persist first, act second | [`PaymentMover.php`](shop/src/Payment/PaymentMover.php): save if unchanged, then `process()` |
 | 34–35 | The graph is an executable spec; the guards ride on it | [`shop/tests/Payment/PaymentGraphTest.php`](shop/tests/Payment/PaymentGraphTest.php) |
 | 36 | A condition, tested with nothing | [`shop/tests/Payment/ConditionTest.php`](shop/tests/Payment/ConditionTest.php) |
 | 37 | What that leaves in your controller | [`shop/src/Controller/WebhookController.php`](shop/src/Controller/WebhookController.php) |
@@ -57,7 +57,7 @@ An action tested with a fake mailer, where nothing is sent before `process()`, i
 [`shop/tests/Payment/SendReceiptTest.php`](shop/tests/Payment/SendReceiptTest.php).
 
 The same rules written the "before" way, as plain PHP with ifs and no state machine, are in
-[`examples/before/PaymentService.php`](examples/before/PaymentService.php). Read it side by
+[`examples/before/PaymentServiceWithIfs.php`](examples/before/PaymentServiceWithIfs.php). Read it side by
 side with [`PaymentMachine.php`](shop/src/Payment/PaymentMachine.php). It is not wired into
 the app.
 
@@ -110,7 +110,8 @@ The shop's tests are where the talk's testing claims are made concrete:
 - **[`ConditionTest`](shop/tests/Payment/ConditionTest.php):** every guard, alone.
 - **[`SendReceiptTest`](shop/tests/Payment/SendReceiptTest.php):** an action, through the machine.
 - **[`PaymentGraphTest`](shop/tests/Payment/PaymentGraphTest.php):** the graph table, the rules table, and the wiring of all seven arrows.
-- **[`PaymentWorkflowTest`](shop/tests/Payment/PaymentWorkflowTest.php):** every door on a real (test) database.
+- **[`PaymentServiceTest`](shop/tests/Payment/PaymentServiceTest.php):** every door on a real (test) database.
+- **[`PaymentMoverTest`](shop/tests/Payment/PaymentMoverTest.php):** the save-then-`process()` protocol, refusal reasons and the race.
 - **[`WebhookTest`](shop/tests/Controller/WebhookTest.php):** the HTTP contract.
 
 ## Notes

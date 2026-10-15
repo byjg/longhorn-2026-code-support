@@ -20,7 +20,8 @@ use Shop\Payment\Condition\RiskRejected;
 use Shop\Payment\Mail\LogMailer;
 use Shop\Payment\Mail\Mailer;
 use Shop\Payment\PaymentMachine;
-use Shop\Payment\PaymentWorkflow;
+use Shop\Payment\PaymentMover;
+use Shop\Payment\PaymentService;
 
 return [
 
@@ -54,7 +55,12 @@ return [
     //     );
     // },
 
-    PaymentWorkflow::class => DI::bind(PaymentWorkflow::class)
+    // Slide 32: ask, save if unchanged, then process(). The doors are in PaymentService.
+    PaymentMover::class => DI::bind(PaymentMover::class)
+        ->withInjectedConstructorOverrides(['logger' => Param::get('PaymentsLogger')])
+        ->toSingleton(),
+
+    PaymentService::class => DI::bind(PaymentService::class)
         ->withInjectedConstructorOverrides(['logger' => Param::get('PaymentsLogger')])
         ->toSingleton(),
 

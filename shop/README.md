@@ -15,7 +15,8 @@ container: `docker compose exec shop <command>`.
 | `src/Payment/PaymentState.php` | The seven states (slide 21) |
 | `src/Payment/PaymentMachine.php` | The graph, the guards and the effects (slide 27) |
 | `src/Payment/Condition/`, `src/Payment/Action/` | The six guards and the four effects |
-| `src/Payment/PaymentWorkflow.php` | The one place every door goes through: ask, save, then `process()` |
+| `src/Payment/PaymentService.php` | The doors: each turns what it knows into the data the guards read |
+| `src/Payment/PaymentMover.php` | Every move goes through it: ask, save if unchanged, then `process()` (slide 32) |
 | `src/Controller/WebhookController.php` | `POST /webhook`: the gateway reports, the machine decides (slide 37) |
 | `src/Command/PaymentCommands.php` | `./gluo payment:create\|charge\|retry\|refund\|sweep` |
 | `config/dev/05-services.php` | The container wiring, including `PaymentMachine::build()` |

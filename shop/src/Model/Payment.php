@@ -6,11 +6,14 @@ use ByJG\MicroOrm\Attributes\FieldAttribute;
 use ByJG\MicroOrm\Attributes\TableAttribute;
 use ByJG\Gluo\Trait\OaCreatedAt;
 use ByJG\Gluo\Trait\OaUpdatedAt;
+use DateTimeImmutable;
+use DateTimeZone;
 use OpenApi\Attributes as OA;
+use Shop\Payment\PaymentState;
 
 /**
  * The merchant's view of a payment. `status` holds a case of Shop\Payment\PaymentState;
- * it is only ever written by Shop\Payment\PaymentWorkflow.
+ * it is only ever written by Shop\Payment\PaymentMover, through recordMove().
  */
 #[OA\Schema(required: ["id", "amount", "status"], type: "object", xml: new OA\Xml(name: "Payment"))]
 #[TableAttribute("payment")]
@@ -105,6 +108,31 @@ class Payment
     public function setPaidAt(string|null $paidAt): static
     {
         $this->paidAt = $paidAt;
+        return $this;
+    }
+
+    /**
+     * A new payment always starts as CREATED. Not saved yet: the repository does that.
+     */
+    public static function newPayment(float $amount): self
+    {
+        return (new self())
+            ->setAmount($amount)
+            ->setStatus(PaymentState::Created->value);
+    }
+
+    /**
+     * The machine moved this payment to $state. PAID also stamps paid_at, in the same write,
+     * because the refund window is counted from it.
+     */
+    public function recordMove(string $state, ?string $transitionName): static
+    {
+        $this->status = $state;
+        $this->transitionName = $transitionName;
+        if ($state === PaymentState::Paid->value) {
+            $this->paidAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        }
+
         return $this;
     }
 }
