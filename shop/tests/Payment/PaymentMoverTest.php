@@ -46,8 +46,8 @@ class PaymentMoverTest extends BaseApiTestCase
 
         $saved = $this->payments->get($id);
         $this->assertTrue($move->isMoved());
-        $this->assertSame('PAID', $saved->getStatus());
-        $this->assertNotNull($saved->getPaidAt());
+        $this->assertSame('PAID', $saved->status);
+        $this->assertNotNull($saved->paidAt);
     }
 
     public function testTheGuardThatSaidNoIsNamed(): void
@@ -57,7 +57,7 @@ class PaymentMoverTest extends BaseApiTestCase
         $move = $this->mover->move($id, PaymentState::Paid, ['gateway' => 'expired'], 'admin');
 
         $this->assertSame('RiskApproved said no', $move->reason);
-        $this->assertSame('ANALYSIS', $this->payments->get($id)->getStatus());
+        $this->assertSame('ANALYSIS', $this->payments->get($id)->status);
     }
 
     public function testNoArrowLeavesAFinalState(): void
@@ -76,9 +76,12 @@ class PaymentMoverTest extends BaseApiTestCase
 
         // Another door moved it to PAID after this one loaded it as ANALYSIS
         $stale = $this->payments->get($id);
-        $this->payments->save($this->payments->get($id)->setStatus(PaymentState::Paid->value));
+        $moved = $this->payments->get($id);
+        $moved->status = PaymentState::Paid;
+        $this->payments->save($moved);
 
         $this->expectException(UpdateConstraintException::class);
-        $this->payments->saveMove($stale->setStatus(PaymentState::Failed->value), PaymentState::Analysis->value);
+        $stale->status = PaymentState::Failed;
+        $this->payments->saveMove($stale, PaymentState::Analysis->value);
     }
 }

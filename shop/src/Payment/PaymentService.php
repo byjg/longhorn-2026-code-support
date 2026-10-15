@@ -30,7 +30,7 @@ class PaymentService
         $payment = Payment::newPayment($amount);
         $this->payments->save($payment);
 
-        $this->logger->info(sprintf('#%d %-8s %s  amount=%.2f', (int)$payment->getId(), $door, PaymentState::Created->value, $amount));
+        $this->logger->info(sprintf('#%d %-8s %s  amount=%.2f', (int)$payment->id, $door, PaymentState::Created->value, $amount));
 
         return $payment;
     }
@@ -41,7 +41,7 @@ class PaymentService
     public function submit(int $paymentId, string $gatewayRef, string $door = 'create'): Move
     {
         $payment = $this->payments->getOrFail($paymentId);
-        $payment->setGatewayRef($gatewayRef);
+        $payment->gatewayRef = $gatewayRef;
         $this->payments->save($payment);
 
         return $this->mover->move($paymentId, PaymentState::Pending, ['gateway_ref' => $gatewayRef], $door);
@@ -88,11 +88,11 @@ class PaymentService
 
         foreach ($this->payments->getByStatus(PaymentState::Pending->value) as $payment) {
             $idleHours = $this->hoursBetween((string)$payment->getUpdatedAt(), $now);
-            $moves[] = $this->mover->move((int)$payment->getId(), PaymentState::Failed, ['idle_hours' => $idleHours], $door);
+            $moves[] = $this->mover->move((int)$payment->id, PaymentState::Failed, ['idle_hours' => $idleHours], $door);
         }
 
         foreach ($this->payments->getByStatus(PaymentState::Paid->value) as $payment) {
-            $moves[] = $this->mover->move((int)$payment->getId(), PaymentState::Closed, ['days_since_paid' => $this->daysSincePaid($payment, $now)], $door);
+            $moves[] = $this->mover->move((int)$payment->id, PaymentState::Closed, ['days_since_paid' => $this->daysSincePaid($payment, $now)], $door);
         }
 
         return $moves;
@@ -100,7 +100,7 @@ class PaymentService
 
     protected function daysSincePaid(Payment $payment, DateTimeImmutable $now): int
     {
-        return intdiv($this->hoursBetween((string)$payment->getPaidAt(), $now), 24);
+        return intdiv($this->hoursBetween((string)$payment->paidAt, $now), 24);
     }
 
     protected function hoursBetween(string $utcDateTime, DateTimeImmutable $now): int

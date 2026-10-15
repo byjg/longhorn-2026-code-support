@@ -23,7 +23,7 @@ abstract class LoggedAction implements TransitionActionInterface
     public function execute(State $from, State $to, ?array $data): void
     {
         $payment = $data['payment'] ?? null;
-        $id = $payment instanceof Payment ? (int)$payment->getId() : 0;
+        $id = $payment instanceof Payment ? (int)$payment->id : 0;
 
         $name = (new \ReflectionClass($this))->getShortName();
         $this->logger->info(sprintf('#%d action   %s: %s', $id, $name, $this->whatHappened()));

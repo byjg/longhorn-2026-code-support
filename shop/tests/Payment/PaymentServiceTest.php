@@ -45,12 +45,12 @@ class PaymentServiceTest extends BaseApiTestCase
     public function testThePaymentWalksTheHappyPath(): void
     {
         $payment = $this->service->open(100.0);
-        $this->assertSame('CREATED', $payment->getStatus());
+        $this->assertSame('CREATED', $payment->status);
 
-        $created = $this->service->submit((int)$payment->getId(), 'GW-1');
+        $created = $this->service->submit((int)$payment->id, 'GW-1');
         $this->assertTrue($created->isMoved());
         $this->assertSame(['CREATED', 'PENDING'], [$created->from, $created->to]);
-        $this->assertSame('GW-1', $this->payments->get($created->paymentId)->getGatewayRef());
+        $this->assertSame('GW-1', $this->payments->get($created->paymentId)->gatewayRef);
 
         $review = $this->service->gatewayReported($created->paymentId, 'requires_review');
         $this->assertSame('ANALYSIS', $review->to);
@@ -59,8 +59,8 @@ class PaymentServiceTest extends BaseApiTestCase
         $this->assertSame('PAID', $paid->to);
 
         $saved = $this->payments->get($created->paymentId);
-        $this->assertSame('PAID', $saved->getStatus());
-        $this->assertNotNull($saved->getPaidAt());
+        $this->assertSame('PAID', $saved->status);
+        $this->assertNotNull($saved->paidAt);
         $this->assertTrue($this->log->hasInfoThatContains("#{$created->paymentId} webhook  ANALYSIS → PAID  gateway=succeeded"));
     }
 
@@ -79,7 +79,7 @@ class PaymentServiceTest extends BaseApiTestCase
 
         $this->assertFalse($move->isMoved());
         $this->assertSame('no arrow PAID → PAID', $move->reason);
-        $this->assertSame('PAID', $this->payments->get($id)->getStatus());
+        $this->assertSame('PAID', $this->payments->get($id)->status);
         $this->assertTrue($this->log->hasInfoThatContains("#{$id} admin    PAID -/-> PAID  refused: no arrow PAID → PAID"));
     }
 
@@ -91,7 +91,7 @@ class PaymentServiceTest extends BaseApiTestCase
 
         $this->assertFalse($move->isMoved());
         $this->assertSame('PENDING→ANALYSIS (PaymentAuthorized: no), PENDING→FAILED (IsAbandoned: no)', $move->reason);
-        $this->assertSame('PENDING', $this->payments->get($id)->getStatus());
+        $this->assertSame('PENDING', $this->payments->get($id)->status);
     }
 
     public function testTheSweepFailsAbandonedPaymentsAndClosesExpiredOnes(): void
@@ -111,7 +111,7 @@ class PaymentServiceTest extends BaseApiTestCase
         $this->assertSame('IsAbandoned said no', $moves[$fresh]->reason);
         $this->assertSame('CLOSED', $moves[$expired]->to);
         $this->assertSame('RefundWindowExpired said no', $moves[$refundable]->reason);
-        $this->assertSame('PAID', $this->payments->get($refundable)->getStatus());
+        $this->assertSame('PAID', $this->payments->get($refundable)->status);
     }
 
     public function testARefundOnlyInsideTheWindow(): void

@@ -42,8 +42,8 @@ class PaymentCommandsTest extends BaseApiTestCase
         $this->assertSame('http://shop/webhook', $sent['webhook_url']);
 
         $payment = $this->payments->get($sent['payment_id']);
-        $this->assertSame('PENDING', $payment->getStatus());
-        $this->assertSame('77', $payment->getGatewayRef());
+        $this->assertSame('PENDING', $payment->status);
+        $this->assertSame('77', $payment->gatewayRef);
     }
 
     public function testAPaymentTheGatewayRefusedStaysCreated(): void
@@ -54,14 +54,16 @@ class PaymentCommandsTest extends BaseApiTestCase
         $this->commands($http)->create(10.0);
 
         $sent = json_decode((string)$http->getRequestedObject()->getBody(), true);
-        $this->assertSame('CREATED', $this->payments->get($sent['payment_id'])->getStatus());
+        $this->assertSame('CREATED', $this->payments->get($sent['payment_id'])->status);
     }
 
     public function testTheRetryJobCannotChargeTwice(): void
     {
-        $payment = (new Payment())->setAmount(10.0)->setStatus(PaymentState::Paid->value);
+        $payment = new Payment();
+        $payment->amount = 10.0;
+        $payment->status = PaymentState::Paid;
         $this->payments->save($payment);
-        $id = (int)$payment->getId();
+        $id = (int)$payment->id;
 
         $this->expectOutputString("#{$id} retry: PAID -/-> PAID refused: no arrow PAID → PAID" . PHP_EOL);
         $this->commands(new MockClient())->retry($id);

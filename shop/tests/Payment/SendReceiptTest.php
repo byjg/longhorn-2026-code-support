@@ -43,7 +43,8 @@ class SendReceiptTest extends TestCase
 
     public function testTheReceiptGoesOutOnlyWhenTheCallerProcessesTheMove(): void
     {
-        $payment = (new Payment())->setId(7);
+        $payment = new Payment();
+        $payment->id = 7;
 
         $paid = $this->fsm->transition(PaymentState::Analysis, PaymentState::Paid, ['gateway' => 'succeeded', 'payment' => $payment]);
 

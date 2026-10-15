@@ -14,6 +14,6 @@ final class LogMailer implements Mailer
     #[\Override]
     public function send(PaymentConfirmed $message): void
     {
-        $this->logger->info(sprintf('#%d mail     PaymentConfirmed: receipt sent', (int)$message->payment->getId()));
+        $this->logger->info(sprintf('#%d mail     PaymentConfirmed: receipt sent', (int)$message->payment->id));
     }
 }

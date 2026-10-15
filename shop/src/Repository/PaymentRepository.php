@@ -59,8 +59,8 @@ class PaymentRepository extends BaseRepository
     public function saveMove(Payment $payment, string $expectedStatus): void
     {
         $this->repository->save($payment, new CustomConstraint(
-            fn (Payment $old): bool => $old->getStatus() === $expectedStatus,
-            "Payment #{$payment->getId()} is no longer {$expectedStatus}"
+            fn (Payment $old): bool => $old->status === $expectedStatus,
+            "Payment #{$payment->id} is no longer {$expectedStatus}"
         ));
     }
 }

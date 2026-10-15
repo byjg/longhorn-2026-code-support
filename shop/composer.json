@@ -7,7 +7,7 @@
   "prefer-stable": true,
   "license": "MIT",
   "require": {
-    "php": ">=8.3 <8.7",
+    "php": ">=8.4 <8.7",
     "ext-json": "*",
     "ext-openssl": "*",
     "ext-curl": "*",

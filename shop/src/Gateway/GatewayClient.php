@@ -30,8 +30,8 @@ class GatewayClient
             Uri::getInstanceFromString(rtrim($this->gatewayUrl, '/') . '/transactions'),
             'POST',
             [
-                'payment_id' => $payment->getId(),
-                'amount' => $payment->getAmount(),
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
                 'webhook_url' => $this->webhookUrl,
             ]
         );

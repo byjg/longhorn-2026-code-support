@@ -15,9 +15,11 @@ trait PaymentFixtures
      */
     private function paymentIn(PaymentState $state, int $updatedHoursAgo = 0, ?int $paidDaysAgo = null): int
     {
-        $payment = (new Payment())->setAmount(50.0)->setStatus($state->value);
+        $payment = new Payment();
+        $payment->amount = 50.0;
+        $payment->status = $state;
         Config::get(PaymentRepository::class)->save($payment);
-        $id = (int)$payment->getId();
+        $id = (int)$payment->id;
 
         /** @var DatabaseExecutor $executor */
         $executor = Config::get(DatabaseExecutor::class);

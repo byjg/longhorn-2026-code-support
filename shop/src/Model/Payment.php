@@ -23,116 +23,65 @@ class Payment
 
     #[OA\Property(type: "integer", format: "int32")]
     #[FieldAttribute(primaryKey: true, fieldName: "id")]
-    protected int|null $id = null;
+    public ?int $id = null;
 
     #[OA\Property(type: "number", format: "float")]
     #[FieldAttribute(fieldName: "amount")]
-    protected float|null $amount = null;
+    public ?float $amount = null;
 
+    /**
+     * Stored and read as the string; written as a PaymentState case or its string value.
+     * Anything else, from a door or from the database, is a ValueError. Compare it with
+     * PaymentState::X->value: what you read back is never the enum.
+     */
     #[OA\Property(type: "string")]
     #[FieldAttribute(fieldName: "status")]
-    protected string|null $status = null;
+    public ?string $status = null {
+        set(string|PaymentState|null $value) {
+            $this->status = match (true) {
+                $value === null => null,
+                $value instanceof PaymentState => $value->value,
+                default => PaymentState::from($value)->value,
+            };
+        }
+    }
 
     #[OA\Property(type: "string", nullable: true)]
     #[FieldAttribute(fieldName: "transition_name")]
-    protected string|null $transitionName = null;
+    public ?string $transitionName = null;
 
     #[OA\Property(type: "string", nullable: true)]
     #[FieldAttribute(fieldName: "gateway_ref")]
-    protected string|null $gatewayRef = null;
+    public ?string $gatewayRef = null;
 
     #[OA\Property(type: "string", format: "date-time", nullable: true)]
     #[FieldAttribute(fieldName: "paid_at")]
-    protected string|null $paidAt = null;
-
-    public function getId(): int|null
-    {
-        return $this->id;
-    }
-
-    public function setId(int|null $id): static
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    public function getAmount(): float|null
-    {
-        return $this->amount;
-    }
-
-    public function setAmount(float|null $amount): static
-    {
-        $this->amount = $amount;
-        return $this;
-    }
-
-    public function getStatus(): string|null
-    {
-        return $this->status;
-    }
-
-    public function setStatus(string|null $status): static
-    {
-        $this->status = $status;
-        return $this;
-    }
-
-    public function getTransitionName(): string|null
-    {
-        return $this->transitionName;
-    }
-
-    public function setTransitionName(string|null $transitionName): static
-    {
-        $this->transitionName = $transitionName;
-        return $this;
-    }
-
-    public function getGatewayRef(): string|null
-    {
-        return $this->gatewayRef;
-    }
-
-    public function setGatewayRef(string|null $gatewayRef): static
-    {
-        $this->gatewayRef = $gatewayRef;
-        return $this;
-    }
-
-    public function getPaidAt(): string|null
-    {
-        return $this->paidAt;
-    }
-
-    public function setPaidAt(string|null $paidAt): static
-    {
-        $this->paidAt = $paidAt;
-        return $this;
-    }
+    public ?string $paidAt = null;
 
     /**
      * A new payment always starts as CREATED. Not saved yet: the repository does that.
      */
     public static function newPayment(float $amount): self
     {
-        return (new self())
-            ->setAmount($amount)
-            ->setStatus(PaymentState::Created->value);
+        $payment = new self();
+        $payment->amount = $amount;
+        // Psalm 6.20 checks against the declared ?string and ignores the set hook's wider type
+        /** @psalm-suppress InvalidPropertyAssignmentValue */
+        $payment->status = PaymentState::Created;
+
+        return $payment;
     }
 
     /**
      * The machine moved this payment to $state. PAID also stamps paid_at, in the same write,
      * because the refund window is counted from it.
      */
-    public function recordMove(string $state, ?string $transitionName): static
+    public function recordMove(string $state, ?string $transitionName): void
     {
         $this->status = $state;
         $this->transitionName = $transitionName;
         if ($state === PaymentState::Paid->value) {
             $this->paidAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
         }
-
-        return $this;
     }
 }

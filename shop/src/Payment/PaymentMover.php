@@ -35,7 +35,7 @@ class PaymentMover
     public function move(int $paymentId, PaymentState $to, array $data, string $door): Move
     {
         $payment = $this->payments->getOrFail($paymentId);
-        $from = (string)$payment->getStatus();
+        $from = (string)$payment->status;
         $data += ['payment' => $payment];
 
         $next = $this->machine->transition($from, $to, $data);
@@ -53,7 +53,7 @@ class PaymentMover
     public function decide(int $paymentId, array $data, string $door): Move
     {
         $payment = $this->payments->getOrFail($paymentId);
-        $from = (string)$payment->getStatus();
+        $from = (string)$payment->status;
         $data += ['payment' => $payment];
 
         $next = $this->machine->autoTransitionFrom($from, $data);
@@ -80,21 +80,21 @@ class PaymentMover
             return $this->refuse($payment, $door, $from, "lost the race: another door moved it first", $to, $data);
         }
 
-        $this->logger->info(sprintf('#%d %-8s %s → %s%s', (int)$payment->getId(), $door, $from, $to, $this->describe($data)));
+        $this->logger->info(sprintf('#%d %-8s %s → %s%s', (int)$payment->id, $door, $from, $to, $this->describe($data)));
 
         $next->process();
 
-        return Move::moved((int)$payment->getId(), $door, $from, $to);
+        return Move::moved((int)$payment->id, $door, $from, $to);
     }
 
     protected function refuse(Payment $payment, string $door, string $from, string $reason, ?string $to, array $data): Move
     {
         $this->logger->info(sprintf(
             '#%d %-8s %s -/-> %s  refused: %s%s',
-            (int)$payment->getId(), $door, $from, $to ?? '?', $reason, $this->describe($data)
+            (int)$payment->id, $door, $from, $to ?? '?', $reason, $this->describe($data)
         ));
 
-        return Move::refused((int)$payment->getId(), $door, $from, $reason, $to);
+        return Move::refused((int)$payment->id, $door, $from, $reason, $to);
     }
 
     /**

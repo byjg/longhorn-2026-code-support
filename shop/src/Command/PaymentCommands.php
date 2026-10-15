@@ -30,16 +30,16 @@ class PaymentCommands
     public function create(float $amount): void
     {
         $payment = $this->payments->open($amount);
-        $this->say("#{$payment->getId()} created: CREATED");
+        $this->say("#{$payment->id} created: CREATED");
 
         try {
             $reference = $this->gateway->register($payment);
         } catch (RuntimeException|ClientExceptionInterface $e) {
-            $this->say("#{$payment->getId()} stays CREATED — the gateway did not take it: {$e->getMessage()}");
+            $this->say("#{$payment->id} stays CREATED — the gateway did not take it: {$e->getMessage()}");
             return;
         }
 
-        $this->report($this->payments->submit((int)$payment->getId(), $reference));
+        $this->report($this->payments->submit((int)$payment->id, $reference));
     }
 
     /**
