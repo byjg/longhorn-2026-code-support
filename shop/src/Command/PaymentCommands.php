@@ -1,0 +1,108 @@
+<?php
+
+namespace Shop\Command;
+
+use DateTimeImmutable;
+use DateTimeZone;
+use Psr\Http\Client\ClientExceptionInterface;
+use RuntimeException;
+use Shop\Gateway\GatewayClient;
+use Shop\Payment\Move;
+use Shop\Payment\PaymentState;
+use Shop\Payment\PaymentWorkflow;
+
+/**
+ * The doors that are not the webhook (slide 29), as ./gluo commands. Each one is a few
+ * lines: it asks PaymentWorkflow, and prints what happened.
+ */
+class PaymentCommands
+{
+    public function __construct(
+        private readonly PaymentWorkflow $workflow,
+        private readonly GatewayClient $gateway,
+    ) {
+    }
+
+    /**
+     * Create a payment and send it to the gateway: CREATED, then PENDING.
+     *
+     * @param float $amount
+     */
+    public function create(float $amount): void
+    {
+        $payment = $this->workflow->open($amount);
+        $this->say("#{$payment->getId()} created: CREATED");
+
+        try {
+            $reference = $this->gateway->register($payment);
+        } catch (RuntimeException|ClientExceptionInterface $e) {
+            $this->say("#{$payment->getId()} stays CREATED — the gateway did not take it: {$e->getMessage()}");
+            return;
+        }
+
+        $this->report($this->workflow->submit((int)$payment->getId(), $reference));
+    }
+
+    /**
+     * The admin button: the risk team charges a payment. Only ANALYSIS -> PAID exists.
+     *
+     * @param int $paymentId
+     */
+    public function charge(int $paymentId): void
+    {
+        $this->report($this->workflow->move($paymentId, PaymentState::Paid, ['gateway' => 'succeeded'], 'admin'));
+    }
+
+    /**
+     * The retry job: a call timed out, so it charges again — the second charge of slide 12.
+     *
+     * @param int $paymentId
+     */
+    public function retry(int $paymentId): void
+    {
+        $this->report($this->workflow->move($paymentId, PaymentState::Paid, ['gateway' => 'succeeded'], 'retry'));
+    }
+
+    /**
+     * The refund endpoint: PAID -> REFUNDED, only inside the refund window.
+     *
+     * @param int $paymentId
+     */
+    public function refund(int $paymentId): void
+    {
+        $this->report($this->workflow->refund($paymentId, $this->now()));
+    }
+
+    /**
+     * The nightly sweep: fail abandoned payments, close the ones past the refund window.
+     */
+    public function sweep(): void
+    {
+        $moves = $this->workflow->sweep($this->now());
+
+        if ($moves === []) {
+            $this->say('nothing to sweep');
+        }
+
+        foreach ($moves as $move) {
+            $this->report($move);
+        }
+    }
+
+    protected function report(Move $move): void
+    {
+        $this->say($move->isMoved()
+            ? "#{$move->paymentId} {$move->door}: {$move->from} → {$move->to}"
+            : "#{$move->paymentId} {$move->door}: {$move->from} -/-> " . ($move->to ?? '?') . " refused: {$move->reason}");
+    }
+
+    protected function say(string $line): void
+    {
+        echo $line . PHP_EOL;
+    }
+
+    protected function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('now', new DateTimeZone('UTC'));
+    }
+}

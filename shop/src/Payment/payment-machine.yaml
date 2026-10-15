@@ -1,0 +1,34 @@
+# The graph of PaymentMachine.php as data (slide 28). Not used by the app: the binding that
+# loads it is commented out in config/dev/05-services.php, and PaymentYamlTest keeps the two in sync.
+enum: 'Shop\Payment\PaymentState'
+transitions:
+  - from: CREATED
+    to: PENDING
+
+  - from: PENDING
+    to: ANALYSIS
+    condition: 'Shop\Payment\Condition\PaymentAuthorized'
+    action: 'Shop\Payment\Action\NotifyRiskTeam'
+
+  - from: PENDING
+    to: FAILED
+    condition: 'Shop\Payment\Condition\IsAbandoned'
+
+  - from: ANALYSIS
+    to: PAID
+    condition: 'Shop\Payment\Condition\RiskApproved'
+    action: 'Shop\Payment\Action\SendReceipt'
+
+  - from: ANALYSIS
+    to: FAILED
+    condition: 'Shop\Payment\Condition\RiskRejected'
+    action: 'Shop\Payment\Action\NotifyCustomer'
+
+  - from: PAID
+    to: REFUNDED
+    condition: 'Shop\Payment\Condition\InRefundWindow'
+    action: 'Shop\Payment\Action\RefundMoney'
+
+  - from: PAID
+    to: CLOSED
+    condition: 'Shop\Payment\Condition\RefundWindowExpired'

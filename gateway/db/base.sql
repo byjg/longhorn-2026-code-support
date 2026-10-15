@@ -1,0 +1,1 @@
+-- SQLite schema. The demo tables are added in db/migrations.

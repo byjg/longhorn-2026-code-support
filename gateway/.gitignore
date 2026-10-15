@@ -1,0 +1,36 @@
+.idea/*
+!.idea/runConfigurations
+/Dockerfile
+
+# API (PHP) — the app root is the repository root
+/composer.lock
+/vendor
+/tools/*/vendor/
+/tools/*/composer.lock
+src/*.db
+config/.env
+
+# Frontend (Vite)
+frontend/node_modules
+frontend/dist
+frontend/.env
+
+node_modules
+.mysql
+.phpunit.result.cache
+TODO
+
+thunder-tests
+
+.secrets
+.env
+ignore.txt
+/.claude/settings.local.json
+/.bash_history
+
+# Setup configuration (keep example only)
+setup.json
+.vscode
+
+# SQLite databases created by ./gluo migrate:reset
+/db/*.sqlite

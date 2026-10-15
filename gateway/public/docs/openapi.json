@@ -1,0 +1,269 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Title",
+        "description": "Information about the API",
+        "termsOfService": "http://localhost:8080/terms/",
+        "contact": {
+            "email": "someone@example.com"
+        },
+        "license": {
+            "name": "Proprietary"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/transactions": {
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "The shop registers a payment and says where to send the webhook.",
+                "operationId": "POST::/transactions::Gateway\\Controller\\TransactionController::register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_id",
+                                    "amount",
+                                    "webhook_url"
+                                ],
+                                "properties": {
+                                    "payment_id": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "webhook_url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The gateway's reference for the payment",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "id"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "format": "int32"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/operator": {
+            "get": {
+                "tags": [
+                    "Page"
+                ],
+                "summary": "The operator's page: every transaction, its buttons, and what the shop answered.",
+                "operationId": "GET::/operator::Gateway\\Controller\\TransactionController::page",
+                "responses": {
+                    "200": {
+                        "description": "The operator page",
+                        "content": {
+                            "text/html": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/{id}/{action}": {
+            "post": {
+                "tags": [
+                    "Page"
+                ],
+                "summary": "A button on the page: report an event to the shop, then go back to the page.",
+                "operationId": "POST::/transactions/{id}/{action}::Gateway\\Controller\\TransactionController::act",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "action",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "review",
+                                "approve",
+                                "decline",
+                                "expire",
+                                "resend"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "303": {
+                        "description": "Back to the operator page"
+                    },
+                    "404": {
+                        "description": "Unknown transaction",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Transaction": {
+                "description": "A payment the shop registered. `status` is the last event the gateway reported.",
+                "properties": {
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "paymentId": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "webhookUrl": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "xml": {
+                    "name": "Transaction"
+                }
+            },
+            "WebhookCall": {
+                "description": "One webhook the gateway sent, and what the shop answered.",
+                "properties": {
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "transactionId": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "event": {
+                        "type": "string"
+                    },
+                    "requestBody": {
+                        "type": "string"
+                    },
+                    "responseStatus": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "responseBody": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "xml": {
+                    "name": "WebhookCall"
+                }
+            },
+            "error": {
+                "properties": {
+                    "error": {
+                        "properties": {
+                            "type": {
+                                "description": "A class de Exceção",
+                                "type": "string"
+                            },
+                            "message": {
+                                "description": "A mensagem de erro",
+                                "type": "string"
+                            },
+                            "file": {
+                                "description": "O arquivo que gerou o erro",
+                                "type": "string"
+                            },
+                            "line": {
+                                "description": "A linha do erro",
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object",
+                "externalDocs": {
+                    "description": "Find out more about Swagger",
+                    "url": "http://localhost:8080/docs"
+                }
+            }
+        },
+        "securitySchemes": {
+            "jwt-token": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Transactions",
+            "description": "Transactions"
+        },
+        {
+            "name": "Page",
+            "description": "Page"
+        }
+    ]
+}

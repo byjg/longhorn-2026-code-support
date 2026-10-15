@@ -1,0 +1,194 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Title",
+        "description": "Information about the API",
+        "termsOfService": "http://localhost:8080/terms/",
+        "contact": {
+            "email": "someone@example.com"
+        },
+        "license": {
+            "name": "Proprietary"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/webhook": {
+            "post": {
+                "tags": [
+                    "Webhook"
+                ],
+                "operationId": "POST::/webhook::Shop\\Controller\\WebhookController::receive",
+                "requestBody": {
+                    "description": "What the gateway saw happen to a payment",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_id",
+                                    "gateway"
+                                ],
+                                "properties": {
+                                    "payment_id": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                    },
+                                    "gateway": {
+                                        "type": "string",
+                                        "enum": [
+                                            "requires_review",
+                                            "succeeded",
+                                            "declined",
+                                            "expired"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Where the payment went, or why it stayed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "payment_id",
+                                        "from"
+                                    ],
+                                    "properties": {
+                                        "payment_id": {
+                                            "type": "integer",
+                                            "format": "int32"
+                                        },
+                                        "from": {
+                                            "type": "string"
+                                        },
+                                        "to": {
+                                            "type": "string"
+                                        },
+                                        "result": {
+                                            "type": "string"
+                                        },
+                                        "reason": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown payment",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Payment": {
+                "description": "The merchant's view of a payment. `status` holds a case of Shop\\Payment\\PaymentState;\nit is only ever written by Shop\\Payment\\PaymentWorkflow.",
+                "required": [
+                    "id",
+                    "amount",
+                    "status"
+                ],
+                "properties": {
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "transitionName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "gatewayRef": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "paidAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "xml": {
+                    "name": "Payment"
+                }
+            },
+            "error": {
+                "properties": {
+                    "error": {
+                        "properties": {
+                            "type": {
+                                "description": "A class de Exceção",
+                                "type": "string"
+                            },
+                            "message": {
+                                "description": "A mensagem de erro",
+                                "type": "string"
+                            },
+                            "file": {
+                                "description": "O arquivo que gerou o erro",
+                                "type": "string"
+                            },
+                            "line": {
+                                "description": "A linha do erro",
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object",
+                "externalDocs": {
+                    "description": "Find out more about Swagger",
+                    "url": "http://localhost:8080/docs"
+                }
+            }
+        },
+        "securitySchemes": {
+            "jwt-token": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Webhook",
+            "description": "Webhook"
+        }
+    ]
+}

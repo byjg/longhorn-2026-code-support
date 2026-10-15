@@ -1,0 +1,45 @@
+services:
+  # The merchant app: byjg/statemachine, the webhook, the payments log.
+  shop:
+    image: longhorn-shop:dev
+    container_name: longhorn-shop
+    build:
+      context: ./shop
+      dockerfile: docker/Dockerfile
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    ports:
+      - "8080:80"
+    volumes:
+      - ./shop:/srv/
+    environment:
+      - APP_ENV=dev
+      - PHP_FPM_SERVER=0.0.0.0:9000
+      - VERBOSE=true
+    networks:
+      - net
+
+  # The fake payment provider: transactions, operator buttons, webhook calls.
+  gateway:
+    image: longhorn-gateway:dev
+    container_name: longhorn-gateway
+    build:
+      context: ./gateway
+      dockerfile: docker/Dockerfile
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    ports:
+      - "8081:80"
+    volumes:
+      - ./gateway:/srv/
+    environment:
+      - APP_ENV=dev
+      - PHP_FPM_SERVER=0.0.0.0:9000
+      - VERBOSE=true
+    networks:
+      - net
+
+networks:
+  net:
