@@ -26,3 +26,4 @@ echo
 echo "Shop:     http://localhost:8080   (webhook: POST /webhook)"
 echo "Gateway:  http://localhost:8081/operator"
 echo "Log:      tail -f shop/var/log/payments.log"
+echo "Try:      docker exec -it longhorn-shop ./gluo payment:create 100"
