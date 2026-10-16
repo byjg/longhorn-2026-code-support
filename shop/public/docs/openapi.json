@@ -99,7 +99,7 @@
     "components": {
         "schemas": {
             "Payment": {
-                "description": "The merchant's view of a payment. `status` holds a case of Shop\\Payment\\PaymentState;\nit is only ever written by Shop\\Payment\\PaymentWorkflow.",
+                "description": "The merchant's view of a payment. `status` holds a case of Shop\\Payment\\PaymentState;\nit is only ever written by Shop\\Payment\\PaymentMover, through recordMove().",
                 "required": [
                     "id",
                     "amount",
@@ -125,6 +125,7 @@
                         "format": "float"
                     },
                     "status": {
+                        "description": "Stored and read as the string; written as a PaymentState case or its string value.\nAnything else, from a door or from the database, is a ValueError. Compare it with\nPaymentState::X->value: what you read back is never the enum.",
                         "type": "string"
                     },
                     "transitionName": {

@@ -2,10 +2,8 @@
 
 namespace Tests\Controller;
 
-use ByJG\Config\Config;
 use ByJG\Gluo\Util\FakeApiRequester;
 use ByJG\RestServer\Exception\Error404Exception;
-use Gateway\Gateway\GatewayPage;
 
 /**
  * The gateway's HTTP side, run in-process against openapi.json.
@@ -44,11 +42,17 @@ class TransactionTest extends BaseApiTestCase
         $this->sendRequest($request);
     }
 
-    // GET / is rendered directly: swagger-test cannot validate a text/html response (it
-    // detects the content type but does not pass it to the body matcher). The live route
-    // is checked over HTTP.
+    /**
+     * GET /operator, validated against openapi.json like any other route (a text/html response).
+     */
     private function page(): string
     {
-        return Config::get(GatewayPage::class)->render();
+        $request = (new FakeApiRequester())
+            ->withPsr7Request($this->getPsr7Request())
+            ->withMethod('GET')
+            ->withPath('/operator')
+            ->expectStatus(200);
+
+        return $this->sendRequest($request)->getBody()->getContents();
     }
 }
