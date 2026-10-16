@@ -19,7 +19,7 @@ use Shop\Payment\Condition\RiskRejected;
 use Shop\Payment\PaymentState;
 
 /**
- * Slides 34 and 35 — the graph is an executable spec, and the guards ride on it.
+ * Slides 35 and 36 — the graph is an executable spec, and the guards ride on it.
  *
  * The machine comes from the container, exactly as the app builds it, so these tests also
  * prove the wiring: PaymentMachine::build() with the container as the resolver.
@@ -33,7 +33,7 @@ class PaymentGraphTest extends TestCase
         $this->fsm = Config::get(FiniteStateMachine::class);
     }
 
-    // Slide 34: does the arrow exist? No guard runs, no data needed.
+    // Slide 35: does the arrow exist? No guard runs, no data needed.
     public static function moves(): array
     {
         return [
@@ -50,7 +50,7 @@ class PaymentGraphTest extends TestCase
         $this->assertSame($exists, $this->fsm->getTransition($from, $to) !== null);
     }
 
-    // Slide 35: the same table, one more column — the data that reaches each arrow.
+    // Slide 36: the same table, one more column — the data that reaches each arrow.
     public static function decisions(): array
     {
         return [
@@ -75,7 +75,7 @@ class PaymentGraphTest extends TestCase
         $this->assertTrue($this->fsm->isInitialState(PaymentState::Created));
     }
 
-    // The wiring check: each arrow carries the guard and the action slide 27 names.
+    // The wiring check: each arrow carries the guard and the action slide 28 names.
     public static function wiring(): array
     {
         return [

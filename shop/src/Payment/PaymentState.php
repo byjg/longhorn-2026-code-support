@@ -2,7 +2,7 @@
 
 namespace Shop\Payment;
 
-// Slide 21 — "Not the states we remembered. All of them."
+// Slide 22 — "Not the states we remembered. All of them."
 enum PaymentState: string
 {
     case Created  = 'CREATED';

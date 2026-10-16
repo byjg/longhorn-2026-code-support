@@ -70,7 +70,7 @@ class PaymentServiceTest extends BaseApiTestCase
         $this->service->gatewayReported(999999, 'succeeded');
     }
 
-    // Slide 26 — "A second charge asks for PAID → PAID. That arrow does not exist."
+    // Slide 27 — "A second charge asks for PAID → PAID. That arrow does not exist."
     public function testTheSecondChargeIsRefused(): void
     {
         $id = $this->paymentIn(PaymentState::Paid);

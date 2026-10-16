@@ -4,7 +4,7 @@ namespace Shop\Payment\Condition;
 
 use ByJG\StateMachine\TransitionConditionInterface;
 
-// PENDING -> FAILED. Reads the idle time from the data instead of a clock, so slide 36
+// PENDING -> FAILED. Reads the idle time from the data instead of a clock, so slide 37
 // tests it with nothing: no container, no database, no frozen clock.
 final class IsAbandoned implements TransitionConditionInterface
 {

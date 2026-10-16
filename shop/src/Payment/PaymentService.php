@@ -9,7 +9,7 @@ use Shop\Model\Payment;
 use Shop\Repository\PaymentRepository;
 
 /**
- * The doors (slide 29): the webhook, the admin button, the retry job, the refund and the
+ * The doors (slide 30): the webhook, the admin button, the retry job, the refund and the
  * nightly sweep. Each turns what it knows into the data the guards read, and hands the move
  * to PaymentMover. The controller and the commands only talk to this class.
  */
@@ -57,7 +57,7 @@ class PaymentService
 
     /**
      * The admin button and the retry job: charge it. Only ANALYSIS -> PAID exists, so a second
-     * charge is refused (slide 26).
+     * charge is refused (slide 27).
      */
     public function charge(int $paymentId, string $door = 'admin'): Move
     {

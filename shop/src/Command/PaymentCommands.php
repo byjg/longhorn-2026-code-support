@@ -11,7 +11,7 @@ use Shop\Payment\Move;
 use Shop\Payment\PaymentService;
 
 /**
- * The doors that are not the webhook (slide 29), as ./gluo commands. Each one is a few
+ * The doors that are not the webhook (slide 30), as ./gluo commands. Each one is a few
  * lines: it asks PaymentService, and prints what happened.
  */
 class PaymentCommands

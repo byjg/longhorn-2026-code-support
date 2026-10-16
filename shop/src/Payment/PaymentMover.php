@@ -11,7 +11,7 @@ use Shop\Model\Payment;
 use Shop\Repository\PaymentRepository;
 
 /**
- * Slide 32 — "The machine stops at step 2. Step 3 is yours to call." This is step 3, the same
+ * Slide 33 — "The machine stops at step 2. Step 3 is yours to call." This is step 3, the same
  * for every move and knowing nothing about why a door asked:
  *   1. ask the machine (it never writes and never fires anything),
  *   2. save the new state, but only if the row still holds the state the move was decided from,
@@ -48,7 +48,7 @@ class PaymentMover
     }
 
     /**
-     * The door only knows what happened (slide 30); the data decides where it goes.
+     * The door only knows what happened (slide 31); the data decides where it goes.
      */
     public function decide(int $paymentId, array $data, string $door): Move
     {

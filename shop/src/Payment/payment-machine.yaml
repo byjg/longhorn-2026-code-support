@@ -1,4 +1,4 @@
-# The graph of PaymentMachine.php as data (slide 28). Not used by the app: the binding that
+# The graph of PaymentMachine.php as data (slide 29). Not used by the app: the binding that
 # loads it is commented out in config/dev/05-services.php, and PaymentYamlTest keeps the two in sync.
 enum: 'Shop\Payment\PaymentState'
 transitions:

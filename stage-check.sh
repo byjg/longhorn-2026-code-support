@@ -53,7 +53,7 @@ step "Slide 12: the gateway delivers the same event again"
 press 1 resend
 expect "#1 webhook  PAID -/-> ?  refused: PAID→REFUNDED (InRefundWindow: no), PAID→CLOSED (RefundWindowExpired: no)  gateway=succeeded"
 
-step "Slide 26: the admin button and the retry job try to charge again"
+step "Slide 27: the admin button and the retry job try to charge again"
 shop payment:charge 1
 shop payment:retry 1
 expect "#1 admin    PAID -/-> PAID  refused: no arrow PAID → PAID"
@@ -71,7 +71,7 @@ press 2 decline
 expect "#2 webhook  ANALYSIS → FAILED  gateway=declined"
 expect "#2 action   NotifyCustomer: customer told the payment failed"
 
-step "Payment #3: review, then Expire — nobody says yes (slide 30)"
+step "Payment #3: review, then Expire — nobody says yes (slide 31)"
 shop payment:create 75 > /dev/null
 press 3 review
 press 3 expire

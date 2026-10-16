@@ -15,7 +15,7 @@ use Shop\Payment\Condition\RefundWindowExpired;
 use Shop\Payment\Condition\RiskApproved;
 use Shop\Payment\Condition\RiskRejected;
 
-// Slide 27 — "One file. The graph, the guards and the effects."
+// Slide 28 — "One file. The graph, the guards and the effects."
 final class PaymentMachine
 {
     public static function build(ContainerInterface $c): FiniteStateMachine

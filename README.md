@@ -61,7 +61,7 @@ The same rules written the "before" way, as plain PHP with ifs and no state mach
 side with [`PaymentMachine.php`](shop/src/Payment/PaymentMachine.php). It is not wired into
 the app.
 
-The same graph as data (slide 28) is in
+The same graph as data (slide 29) is in
 [`shop/src/Payment/payment-machine.yaml`](shop/src/Payment/payment-machine.yaml), next to
 `PaymentMachine.php`. The app does not load it: the binding that would is commented out in
 [`shop/config/dev/05-services.php`](shop/config/dev/05-services.php), and
@@ -77,20 +77,20 @@ so reset with `./setup.sh` first).
 | # | Do | The log shows | The point |
 |---|---|---|---|
 | 1 | `docker compose exec shop ./gluo payment:create 100` | `CREATED → PENDING  gateway_ref=1` | The shop registers it; the gateway page shows Payment #1 |
-| 2 | Press **Approve** on #1 | `PENDING -/-> ?  refused: PENDING→ANALYSIS (PaymentAuthorized: no), PENDING→FAILED (IsAbandoned: no)` | No arrow from PENDING to PAID: you cannot skip analysis (slide 20) |
-| 3 | Press **Review** | `PENDING → ANALYSIS`, then `action NotifyRiskTeam` | The data decides (slide 30); the action runs after the save |
-| 4 | Press **Approve** | `ANALYSIS → PAID`, then `mail PaymentConfirmed: receipt sent` | RiskApproved guards one arrow (slide 23); the receipt goes out once |
+| 2 | Press **Approve** on #1 | `PENDING -/-> ?  refused: PENDING→ANALYSIS (PaymentAuthorized: no), PENDING→FAILED (IsAbandoned: no)` | No arrow from PENDING to PAID: you cannot skip analysis (slide 21) |
+| 3 | Press **Review** | `PENDING → ANALYSIS`, then `action NotifyRiskTeam` | The data decides (slide 31); the action runs after the save |
+| 4 | Press **Approve** | `ANALYSIS → PAID`, then `mail PaymentConfirmed: receipt sent` | RiskApproved guards one arrow (slide 24); the receipt goes out once |
 | 5 | Press **Resend** | `PAID -/-> ?  refused: …` | The gateway delivers twice — nothing happens (slide 12) |
-| 6 | `… payment:charge 1` then `… payment:retry 1` | `PAID -/-> PAID  refused: no arrow PAID → PAID` | The second charge cannot be expressed (slide 26) |
+| 6 | `… payment:charge 1` then `… payment:retry 1` | `PAID -/-> PAID  refused: no arrow PAID → PAID` | The second charge cannot be expressed (slide 27) |
 | 7 | `… payment:refund 1` | `PAID → REFUNDED`, then `action RefundMoney` | A guard on time, fed by data, not by a clock |
 | 8 | `… payment:create 50`, **Review**, **Decline** | `ANALYSIS → FAILED`, then `action NotifyCustomer` | Same state, different arrow, different effect |
-| 9 | `… payment:create 75`, **Review**, **Expire** | `ANALYSIS -/-> ?  refused: …RiskApproved: no… RiskRejected: no` | "null — nobody says yes" (slide 30) |
+| 9 | `… payment:create 75`, **Review**, **Expire** | `ANALYSIS -/-> ?  refused: …RiskApproved: no… RiskRejected: no` | "null — nobody says yes" (slide 31) |
 
 Questions you may get, with a live answer:
 - **"What if the gateway is down?"** `docker compose stop gateway`, then `payment:create 30`:
   the payment stays CREATED and says why. `docker compose start gateway` brings it back.
 - **"Decline while PENDING?"** It is refused: only ANALYSIS → FAILED checks `declined`. The
-  graph is exactly slide 27, and the missing arrow is a design decision, visible in one file.
+  graph is exactly slide 28, and the missing arrow is a design decision, visible in one file.
 - **"Two writers at the same instant?"** `PaymentRepository::saveMove()` only saves if the row
   still holds the state the move was decided from (`ASaveFromAStaleStateIsRejected` test).
 - **"Is the HTTP contract enforced?"** An unknown event is a 400: the webhook body is
@@ -124,4 +124,4 @@ The shop's tests are where the talk's testing claims are made concrete:
 - **The shop's `PaymentMachine` is built by the container.**
   `DI::bind(PaymentMachine::class)->withFactoryMethod('build', [Param::container()])` in
   [`shop/config/dev/05-services.php`](shop/config/dev/05-services.php), so every condition
-  and action named on slide 27 is resolved, with its dependencies, when the machine is built.
+  and action named on slide 28 is resolved, with its dependencies, when the machine is built.

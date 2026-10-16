@@ -11,7 +11,7 @@ use Shop\Payment\PaymentNotFound;
 use Shop\Payment\PaymentService;
 
 /**
- * Slide 37 — "What that leaves in your controller". The gateway only knows what happened;
+ * Slide 38 — "What that leaves in your controller". The gateway only knows what happened;
  * the machine decides where that takes the payment. No branches left to test here.
  */
 class WebhookController

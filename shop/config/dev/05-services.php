@@ -40,12 +40,12 @@ return [
     NotifyCustomer::class => DI::bind(NotifyCustomer::class)->withConstructorArgs([Param::get('PaymentsLogger')])->toSingleton(),
     RefundMoney::class => DI::bind(RefundMoney::class)->withConstructorArgs([Param::get('PaymentsLogger')])->toSingleton(),
 
-    // Slide 27: the machine is built by PaymentMachine::build() with the container as resolver.
+    // Slide 28: the machine is built by PaymentMachine::build() with the container as resolver.
     FiniteStateMachine::class => DI::bind(PaymentMachine::class)
         ->withFactoryMethod('build', [Param::container()])
         ->toSingleton(),
 
-    // Slide 28: the same graph read from src/Payment/payment-machine.yaml. To use it, comment
+    // Slide 29: the same graph read from src/Payment/payment-machine.yaml. To use it, comment
     // out the binding above and uncomment this one (and import ByJG\Serializer\Serialize).
     // FiniteStateMachine::class => function () {
     //     $yaml = file_get_contents(__DIR__ . '/../../src/Payment/payment-machine.yaml');
@@ -55,7 +55,7 @@ return [
     //     );
     // },
 
-    // Slide 32: ask, save if unchanged, then process(). The doors are in PaymentService.
+    // Slide 33: ask, save if unchanged, then process(). The doors are in PaymentService.
     PaymentMover::class => DI::bind(PaymentMover::class)
         ->withInjectedConstructorOverrides(['logger' => Param::get('PaymentsLogger')])
         ->toSingleton(),

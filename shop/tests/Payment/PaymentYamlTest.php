@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Shop\Payment\PaymentState;
 
 /**
- * Slide 28 — the whole graph as YAML. The file is not what the app runs, so this test is what
+ * Slide 29 — the whole graph as YAML. The file is not what the app runs, so this test is what
  * stops it drifting from PaymentMachine: every pair of states must give the same arrow, with
  * the same condition and the same action, in both machines.
  */

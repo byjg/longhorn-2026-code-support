@@ -13,7 +13,7 @@ use Shop\Payment\Condition\RiskApproved;
 use Shop\Payment\Condition\RiskRejected;
 
 /**
- * Slide 36 — "A condition, tested with nothing". No container, no database, no HTTP,
+ * Slide 37 — "A condition, tested with nothing". No container, no database, no HTTP,
  * no frozen clock: a condition only reads the data it is handed.
  */
 class ConditionTest extends TestCase

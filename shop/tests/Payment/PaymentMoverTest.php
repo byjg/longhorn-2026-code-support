@@ -13,7 +13,7 @@ use Shop\Repository\PaymentRepository;
 use Tests\Controller\BaseApiTestCase;
 
 /**
- * Slide 32 — the protocol every door relies on: ask, save if unchanged, then process(),
+ * Slide 33 — the protocol every door relies on: ask, save if unchanged, then process(),
  * and name the reason when the machine says no.
  */
 class PaymentMoverTest extends BaseApiTestCase
