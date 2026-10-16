@@ -23,7 +23,7 @@ class WebhookTest extends BaseApiTestCase
         $body = $this->post(['payment_id' => $id, 'gateway' => 'requires_review'], 200);
 
         $this->assertSame(['payment_id' => $id, 'from' => 'PENDING', 'to' => 'ANALYSIS'], $body);
-        $this->assertSame('ANALYSIS', Config::get(PaymentRepository::class)->get($id)->status);
+        $this->assertSame(PaymentState::Analysis, Config::get(PaymentRepository::class)->get($id)->status);
     }
 
     public function testARefusedMoveIsStillA200WithTheReason(): void
@@ -34,7 +34,7 @@ class WebhookTest extends BaseApiTestCase
 
         $this->assertSame('refused', $body['result']);
         $this->assertSame('ANALYSIS→PAID (RiskApproved: no), ANALYSIS→FAILED (RiskRejected: no)', $body['reason']);
-        $this->assertSame('ANALYSIS', Config::get(PaymentRepository::class)->get($id)->status);
+        $this->assertSame(PaymentState::Analysis, Config::get(PaymentRepository::class)->get($id)->status);
     }
 
     public function testAnUnknownPaymentIs404(): void

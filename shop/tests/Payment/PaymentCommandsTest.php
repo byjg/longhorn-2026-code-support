@@ -42,7 +42,7 @@ class PaymentCommandsTest extends BaseApiTestCase
         $this->assertSame('http://shop/webhook', $sent['webhook_url']);
 
         $payment = $this->payments->get($sent['payment_id']);
-        $this->assertSame('PENDING', $payment->status);
+        $this->assertSame(PaymentState::Pending, $payment->status);
         $this->assertSame('77', $payment->gatewayRef);
     }
 
@@ -54,7 +54,7 @@ class PaymentCommandsTest extends BaseApiTestCase
         $this->commands($http)->create(10.0);
 
         $sent = json_decode((string)$http->getRequestedObject()->getBody(), true);
-        $this->assertSame('CREATED', $this->payments->get($sent['payment_id'])->status);
+        $this->assertSame(PaymentState::Created, $this->payments->get($sent['payment_id'])->status);
     }
 
     public function testTheRetryJobCannotChargeTwice(): void

@@ -35,7 +35,7 @@ class PaymentMover
     public function move(int $paymentId, PaymentState $to, array $data, string $door): Move
     {
         $payment = $this->payments->getOrFail($paymentId);
-        $from = (string)$payment->status;
+        $from = (string)$payment->status?->value;
         $data += ['payment' => $payment];
 
         $next = $this->machine->transition($from, $to, $data);
@@ -53,7 +53,7 @@ class PaymentMover
     public function decide(int $paymentId, array $data, string $door): Move
     {
         $payment = $this->payments->getOrFail($paymentId);
-        $from = (string)$payment->status;
+        $from = (string)$payment->status?->value;
         $data += ['payment' => $payment];
 
         $next = $this->machine->autoTransitionFrom($from, $data);

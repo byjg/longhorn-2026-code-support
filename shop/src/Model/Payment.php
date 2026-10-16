@@ -12,8 +12,8 @@ use OpenApi\Attributes as OA;
 use Shop\Payment\PaymentState;
 
 /**
- * The merchant's view of a payment. `status` holds a case of Shop\Payment\PaymentState;
- * it is only ever written by Shop\Payment\PaymentMover, through recordMove().
+ * The merchant's view of a payment. `status` is a Shop\Payment\PaymentState, stored as its
+ * value; it is only ever written by Shop\Payment\PaymentMover, through recordMove().
  */
 #[OA\Schema(required: ["id", "amount", "status"], type: "object", xml: new OA\Xml(name: "Payment"))]
 #[TableAttribute("payment")]
@@ -30,21 +30,12 @@ class Payment
     public ?float $amount = null;
 
     /**
-     * Stored and read as the string; written as a PaymentState case or its string value.
-     * Anything else, from a door or from the database, is a ValueError. Compare it with
-     * PaymentState::X->value: what you read back is never the enum.
+     * Stored as its value ('PAID'); a value from the database that PaymentState does not have
+     * is a ValueError.
      */
     #[OA\Property(type: "string")]
     #[FieldAttribute(fieldName: "status")]
-    public ?string $status = null {
-        set(string|PaymentState|null $value) {
-            $this->status = match (true) {
-                $value === null => null,
-                $value instanceof PaymentState => $value->value,
-                default => PaymentState::from($value)->value,
-            };
-        }
-    }
+    public ?PaymentState $status = null;
 
     #[OA\Property(type: "string", nullable: true)]
     #[FieldAttribute(fieldName: "transition_name")]
@@ -65,8 +56,6 @@ class Payment
     {
         $payment = new self();
         $payment->amount = $amount;
-        // Psalm 6.20 checks against the declared ?string and ignores the set hook's wider type
-        /** @psalm-suppress InvalidPropertyAssignmentValue */
         $payment->status = PaymentState::Created;
 
         return $payment;
@@ -78,9 +67,9 @@ class Payment
      */
     public function recordMove(string $state, ?string $transitionName): void
     {
-        $this->status = $state;
+        $this->status = PaymentState::from($state);
         $this->transitionName = $transitionName;
-        if ($state === PaymentState::Paid->value) {
+        if ($this->status === PaymentState::Paid) {
             $this->paidAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
         }
     }

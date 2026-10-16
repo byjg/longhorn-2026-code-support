@@ -46,7 +46,7 @@ class PaymentMoverTest extends BaseApiTestCase
 
         $saved = $this->payments->get($id);
         $this->assertTrue($move->isMoved());
-        $this->assertSame('PAID', $saved->status);
+        $this->assertSame(PaymentState::Paid, $saved->status);
         $this->assertNotNull($saved->paidAt);
     }
 
@@ -57,7 +57,7 @@ class PaymentMoverTest extends BaseApiTestCase
         $move = $this->mover->move($id, PaymentState::Paid, ['gateway' => 'expired'], 'admin');
 
         $this->assertSame('RiskApproved said no', $move->reason);
-        $this->assertSame('ANALYSIS', $this->payments->get($id)->status);
+        $this->assertSame(PaymentState::Analysis, $this->payments->get($id)->status);
     }
 
     public function testNoArrowLeavesAFinalState(): void

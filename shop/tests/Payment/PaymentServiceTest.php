@@ -45,7 +45,7 @@ class PaymentServiceTest extends BaseApiTestCase
     public function testThePaymentWalksTheHappyPath(): void
     {
         $payment = $this->service->open(100.0);
-        $this->assertSame('CREATED', $payment->status);
+        $this->assertSame(PaymentState::Created, $payment->status);
 
         $created = $this->service->submit((int)$payment->id, 'GW-1');
         $this->assertTrue($created->isMoved());
@@ -59,7 +59,7 @@ class PaymentServiceTest extends BaseApiTestCase
         $this->assertSame('PAID', $paid->to);
 
         $saved = $this->payments->get($created->paymentId);
-        $this->assertSame('PAID', $saved->status);
+        $this->assertSame(PaymentState::Paid, $saved->status);
         $this->assertNotNull($saved->paidAt);
         $this->assertTrue($this->log->hasInfoThatContains("#{$created->paymentId} webhook  ANALYSIS → PAID  gateway=succeeded"));
     }
@@ -79,7 +79,7 @@ class PaymentServiceTest extends BaseApiTestCase
 
         $this->assertFalse($move->isMoved());
         $this->assertSame('no arrow PAID → PAID', $move->reason);
-        $this->assertSame('PAID', $this->payments->get($id)->status);
+        $this->assertSame(PaymentState::Paid, $this->payments->get($id)->status);
         $this->assertTrue($this->log->hasInfoThatContains("#{$id} admin    PAID -/-> PAID  refused: no arrow PAID → PAID"));
     }
 
@@ -91,7 +91,7 @@ class PaymentServiceTest extends BaseApiTestCase
 
         $this->assertFalse($move->isMoved());
         $this->assertSame('PENDING→ANALYSIS (PaymentAuthorized: no), PENDING→FAILED (IsAbandoned: no)', $move->reason);
-        $this->assertSame('PENDING', $this->payments->get($id)->status);
+        $this->assertSame(PaymentState::Pending, $this->payments->get($id)->status);
     }
 
     public function testTheSweepFailsAbandonedPaymentsAndClosesExpiredOnes(): void
@@ -111,7 +111,7 @@ class PaymentServiceTest extends BaseApiTestCase
         $this->assertSame('IsAbandoned said no', $moves[$fresh]->reason);
         $this->assertSame('CLOSED', $moves[$expired]->to);
         $this->assertSame('RefundWindowExpired said no', $moves[$refundable]->reason);
-        $this->assertSame('PAID', $this->payments->get($refundable)->status);
+        $this->assertSame(PaymentState::Paid, $this->payments->get($refundable)->status);
     }
 
     public function testARefundOnlyInsideTheWindow(): void
