@@ -3,13 +3,14 @@
 namespace Tests\Console;
 
 use Builder\Scripts;
-use ByJG\JwtWrapper\JwtWrapper;
 use ByJG\Gluo\Console\Launcher;
+use ByJG\Scriptify\CommandProvider;
+use Shop\Command\Commands;
 use Tests\Controller\BaseApiTestCase;
 
 /**
- * The ./gluo wiring this project owns: config/scriptify-bootstrap.php, config/commands.php
- * and Builder\Scripts, against the real container and the migrated test database.
+ * The ./gluo wiring this project owns: the Commands provider and Builder\Scripts, against
+ * the real container and the migrated test database.
  * Extends BaseApiTestCase to reuse the database reset and environment guard.
  */
 class GluoTest extends BaseApiTestCase
@@ -17,23 +18,24 @@ class GluoTest extends BaseApiTestCase
     protected const ROOT = __DIR__ . '/../..';
 
     /**
-     * @param array<string, string>|null $commands Replaces config/commands.php when given.
+     * @param array<string, string>|null $commands Replaces the Commands provider when given.
      * @return array{0: int, 1: string}
      */
     protected function gluo(array $arguments, ?array $commands = null): array
     {
-        $launcher = new class (self::ROOT, $commands) extends Launcher {
-            public function __construct(string $rootDir, private ?array $commands)
+        $provider = $commands === null ? new Commands() : new class ($commands) implements CommandProvider {
+            /** @param array<string, string> $commands */
+            public function __construct(private array $commands)
             {
-                parent::__construct($rootDir);
             }
 
             #[\Override]
-            public function getProjectCommands(): array
+            public function commands(): array
             {
-                return $this->commands ?? parent::getProjectCommands();
+                return $this->commands;
             }
         };
+        $launcher = new Launcher(self::ROOT, $provider);
 
         ob_start();
         try {
@@ -57,15 +59,15 @@ class GluoTest extends BaseApiTestCase
 
     public function testShippedRegistryExposesExactlyThePaymentDoors(): void
     {
-        $commands = (new Launcher(self::ROOT))->getProjectCommands();
+        $commands = (new Launcher(self::ROOT, new Commands()))->getCommands();
 
         // A helper made public by mistake would show up here as an extra command.
         $this->assertSame([
-            'payment:charge' => 'Shop/Command/PaymentCommands::charge',
-            'payment:create' => 'Shop/Command/PaymentCommands::create',
-            'payment:refund' => 'Shop/Command/PaymentCommands::refund',
-            'payment:retry' => 'Shop/Command/PaymentCommands::retry',
-            'payment:sweep' => 'Shop/Command/PaymentCommands::sweep',
+            'payment:charge' => 'Shop\\Command\\PaymentCommands::charge',
+            'payment:create' => 'Shop\\Command\\PaymentCommands::create',
+            'payment:refund' => 'Shop\\Command\\PaymentCommands::refund',
+            'payment:retry' => 'Shop\\Command\\PaymentCommands::retry',
+            'payment:sweep' => 'Shop\\Command\\PaymentCommands::sweep',
         ], $commands);
         foreach (array_keys($commands) as $name) {
             $this->assertTrue(Launcher::isValidName($name), "Invalid command name: $name");
@@ -73,7 +75,7 @@ class GluoTest extends BaseApiTestCase
         }
     }
 
-    public function testBootstrapReturnsTheContainerThatBuildsRegisteredServices(): void
+    public function testTheGluoContainerBuildsTheRegisteredServices(): void
     {
         $commands = [
             'jwt:leeway' => 'ByJG/JwtWrapper/JwtWrapper::setLeeway',
@@ -94,10 +96,7 @@ class GluoTest extends BaseApiTestCase
 
     public function testBuiltInsRunThroughTheProjectScripts(): void
     {
-        $launcher = new Launcher(self::ROOT);
-
-        $this->assertInstanceOf(Scripts::class, $launcher->getScripts());
-        $this->assertTrue($launcher->getContainer()->has(JwtWrapper::class));
+        $this->assertInstanceOf(Scripts::class, (new Launcher(self::ROOT, new Commands()))->getScripts());
     }
 
     public function testMigrateVersionAgainstTheTestDatabase(): void

@@ -22,7 +22,7 @@ return [
         ->withInjectedConstructor()
         ->toSingleton(),
 
-    // ./gluo gateway:* — see config/commands.php
+    // ./gluo gateway:* — see src/Command/Commands.php
     GatewayCommands::class => DI::bind(GatewayCommands::class)
         ->withInjectedConstructor()
         ->toSingleton(),

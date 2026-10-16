@@ -73,7 +73,7 @@ return [
         ->withConstructorArgs([Param::get(ClientInterface::class), Param::get('GATEWAY_URL'), Param::get('SHOP_WEBHOOK_URL')])
         ->toSingleton(),
 
-    // ./gluo payment:* — see config/commands.php
+    // ./gluo payment:* — see src/Command/Commands.php
     PaymentCommands::class => DI::bind(PaymentCommands::class)
         ->withInjectedConstructor()
         ->toSingleton(),
