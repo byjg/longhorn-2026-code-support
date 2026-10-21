@@ -27,7 +27,7 @@ class GatewayClient
     public function register(Payment $payment): string
     {
         $request = RequestJson::build(
-            Uri::getInstanceFromString(rtrim($this->gatewayUrl, '/') . '/transactions'),
+            Uri::getInstance(rtrim($this->gatewayUrl, '/') . '/transactions'),
             'POST',
             [
                 'payment_id' => $payment->id,

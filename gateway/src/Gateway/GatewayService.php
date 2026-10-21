@@ -94,7 +94,7 @@ class GatewayService
 
         try {
             $response = $this->http->sendRequest(
-                RequestJson::build(Uri::getInstanceFromString((string)$transaction->getWebhookUrl()), 'POST', $payload)
+                RequestJson::build(Uri::getInstance((string)$transaction->getWebhookUrl()), 'POST', $payload)
             );
             $status = $response->getStatusCode();
             $body = (string)$response->getBody();
