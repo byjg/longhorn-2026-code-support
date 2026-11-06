@@ -91,7 +91,7 @@ class GluoTest extends BaseApiTestCase
         // --help builds the service through the container: JwtWrapper cannot be built with new.
         [$exitCode, $output] = $this->gluo(['jwt:leeway', '--help'], $commands);
         $this->assertSame(0, $exitCode, $output);
-        $this->assertStringContainsString("./gluo jwt:leeway <seconds>", $output);
+        $this->assertStringContainsString("php gluo jwt:leeway <seconds>", $output);
     }
 
     public function testBuiltInsRunThroughTheProjectScripts(): void
